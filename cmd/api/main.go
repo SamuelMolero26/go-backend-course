@@ -1,17 +1,22 @@
 package main
 
-import "log"
+import (
+	"github.com/samuelmolero26/go-backend-course/internal/env"
+	"log"
+)
 
 func main() {
 
 	cfg := config{
-		addr: "8080",
+		addr: env.GetString("ADDR", ":8080"),
 	}
 
 	app := &application{
 		config: cfg,
 	}
 
-	log.Fatal(app.serve())
+	mux := app.mount()
+
+	log.Fatal(app.serve(mux))
 
 }

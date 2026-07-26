@@ -1,8 +1,11 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
+	"time"
 )
 
 type application struct {
@@ -13,12 +16,35 @@ type config struct {
 	addr string
 }
 
-func (app *application) serve() error {
-	mux := http.NewServeMux()
+func (app *application) mount() http.Handler {
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.ClientIPFromRemoteAddr)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	// Set a timeout value on the request context (ctx), that will signal
+	// through ctx.Done() that the request has timed out and further
+	// processing should be stopped.
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	r.Route("/v1", func(r chi.Router) {
+		r.Get("/health", app.healthChecker)
+	})
+
+	return r
+}
+
+func (app *application) serve(mux http.Handler) error {
 
 	srv := &http.Server{
-		Addr:    app.config.addr,
-		Handler: mux,
+		Addr:         app.config.addr,
+		Handler:      mux,
+		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		IdleTimeout:  time.Minute,
 	}
 
 	log.Printf("Server has started at %s", app.config.addr)
