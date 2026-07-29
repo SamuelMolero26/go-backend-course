@@ -1,3 +1,11 @@
 .atl/
 .envrc
 .air.toml
+
+# Build artifacts
+bin/
+tmp/
+build-errors.log
+
+# Environment
+.env
