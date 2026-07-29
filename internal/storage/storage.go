@@ -114,6 +114,10 @@ func (s *Store) Followers() FollowerRepository   { return s.FollowerStore }
 func (s *Store) AuthTokens() AuthTokenRepository { return s.AuthTokenStore }
 func (s *Store) Roles() RoleRepository           { return s.RoleStore }
 
+func (s *Store) Close() {
+	s.db.Close()
+}
+
 func NewStorage(ctx context.Context, dsn string) (*Store, error) {
 
 	pool, err := pgxpool.New(ctx, dsn)
