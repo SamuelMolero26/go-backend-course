@@ -50,6 +50,21 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	return &user, nil
 }
 
+func (s *UserStore) Update(ctx context.Context, user *User) error {
+	query := `UPDATE users SET username = $1, email = $2 WHERE id = $3`
+
+	result, err := s.db.Exec(ctx, query, user.Username, user.Email, user.ID)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
 func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
 	query := `
 		SELECT id, username, email, password, role_id, created_at

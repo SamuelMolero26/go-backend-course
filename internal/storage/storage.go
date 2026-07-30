@@ -69,12 +69,14 @@ type PostRepository interface {
 	Create(ctx context.Context, post *Post) error
 	GetByID(ctx context.Context, id int64) (*Post, error)
 	GetByUserID(ctx context.Context, userID int64) ([]Post, error)
+	Update(ctx context.Context, post *Post) error
 	Delete(ctx context.Context, id int64, userID int64) error
 }
 
 type CommentRepository interface {
 	Create(ctx context.Context, comment *Comment) error
 	GetByPostID(ctx context.Context, postID int64) ([]Comment, error)
+	GetByID(ctx context.Context, id int64) (*Comment, error) 
 	Delete(ctx context.Context, id int64, userID int64) error
 }
 
@@ -94,6 +96,7 @@ type AuthTokenRepository interface {
 
 type UsersRepository interface {
 	Create(ctx context.Context, user *User) error
+	Update(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 }
@@ -106,6 +109,8 @@ type Storage interface {
 	AuthTokens() AuthTokenRepository
 	Roles() RoleRepository
 }
+
+
 
 func (s *Store) Users() UsersRepository          { return s.UserStore }
 func (s *Store) Posts() PostRepository           { return s.PostStore }

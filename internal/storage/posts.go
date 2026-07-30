@@ -73,6 +73,21 @@ func (s *PostStore) GetByUserID(ctx context.Context, userID int64) ([]Post, erro
 	return posts, nil
 }
 
+func (s *PostStore) Update(ctx context.Context, post *Post) error {
+	query := `UPDATE posts SET content = $1 WHERE id = $2 AND user_id = $3`
+
+	result, err := s.db.Exec(ctx, query, post.Content, post.ID, post.UserID)
+	if err != nil {
+		return fmt.Errorf("update post: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("post not found or not owned by user")
+	}
+
+	return nil
+}
+
 func (s *PostStore) Delete(ctx context.Context, id int64, userID int64) error {
 	query := `DELETE FROM posts WHERE id = $1 AND user_id = $2`
 

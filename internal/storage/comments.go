@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -57,6 +59,23 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 	}
 
 	return comments, nil
+}
+
+func (s *CommentStore) GetByID(ctx context.Context, id int64) (*Comment, error) {
+	query := `SELECT id, post_id, user_id, content, created_at FROM comments WHERE id = $1`
+
+	var comment Comment
+	err := s.db.QueryRow(ctx, query, id).Scan(
+		&comment.ID, &comment.PostID, &comment.UserID,
+		&comment.Content, &comment.CreatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("comment not found: %w", err)
+		}
+		return nil, fmt.Errorf("get comment by id: %w", err)
+	}
+	return &comment, nil
 }
 
 func (s *CommentStore) Delete(ctx context.Context, id int64, userID int64) error {

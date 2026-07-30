@@ -6,6 +6,8 @@ import (
 
 	"github.com/samuelmolero26/go-backend-course/internal/env"
 	"github.com/samuelmolero26/go-backend-course/internal/storage"
+	"github.com/samuelmolero26/go-backend-course/internal/ratelimit"
+
 )
 
 func main() {
@@ -25,6 +27,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		store:  store,
+		rateLimiter: ratelimit.New(10,2),
 	}
 
 	mux := app.mount()

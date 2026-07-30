@@ -8,11 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/samuelmolero26/go-backend-course/internal/storage"
+	"github.com/samuelmolero26/go-backend-course/internal/ratelimit"
 )
 
 type application struct {
-	config config
-	store  *storage.Store
+	config 		config
+	store  		*storage.Store
+	rateLimiter *ratelimit.Limiter
 }
 
 type config struct {
@@ -28,6 +30,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(app.ratelimiterMiddleware)
 
 	r.Route("/v1", func(r chi.Router) {
 		// Public
@@ -41,12 +44,18 @@ func (app *application) mount() http.Handler {
 			r.Post("/logout", app.logoutHandler)
 			r.Post("/posts", app.createPostHandler)
 			r.Get("/posts/{id}", app.getPostHandler)
+			r.Get("/users/{id}", app.getUserHandler)
 			r.Get("/users/{id}/posts", app.getUserPostsHandler)
+			r.Get("/users/{id}/followers", app.getFollowersHandler)
+			r.Get("/users/{id}/following", app.getFollowingHandler)
+			r.Post("/users/{id}/follow", app.followUserHandler)
+			r.Delete("/users/{id}/follow", app.unfollowUserHandler)
 
 			//ownership group
 			r.Group(func(r chi.Router) {
 				r.Use(app.requirePostOwnership)
 				r.Delete("/posts/{id}", app.deletePostHandler)
+				r.Patch("/posts/{id}", app.updatePostHandler)
 			})
 		})
 	})

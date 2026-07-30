@@ -70,6 +70,28 @@ func (app *application) getUserPostsHandler(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(posts)
 }
 
+func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
+	post := r.Context().Value(postContextKey).(*storage.Post)
+
+	var payload struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, `{"error": "invalid JSON"}`, http.StatusBadRequest)
+		return
+	}
+
+	post.Content = payload.Content
+
+	if err := app.store.Posts().Update(r.Context(), post); err != nil {
+		http.Error(w, `{"error": "could not update post"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {

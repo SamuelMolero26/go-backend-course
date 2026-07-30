@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"github.com/samuelmolero26/go-backend-course/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -41,6 +42,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := app.store.Users().Create(r.Context(), user); err != nil {
+		log.Printf("ERROR create user: %v", err)
 		http.Error(w, `{"error": "could not create user"}`, http.StatusInternalServerError)
 		return
 	}

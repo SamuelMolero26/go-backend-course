@@ -14,6 +14,7 @@ type contextKey string
 
 const userContextKey contextKey = "user"
 const postContextKey contextKey = "post"
+const commentContextKey contextKey = "comment"
 
 func (app *application) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +72,31 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (app *application) requireCommentOwnership(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+		if err != nil {
+			http.Error(w, `{"error": "Invalid comment ID"}`, http.StatusBadRequest)
+			return
+		}
+
+		comment, err := app.store.Comments().GetByID(r.Context(), id)
+		if err != nil{
+			http.Error(w, `{"error": "comment not found"}`, http.StatusNotFound)
+			return
+		}
+
+		user := r.Context().Value(userContextKey).(*storage.User)
+		if comment.UserID != user.ID {
+			http.Error(w, `{"error": "forbidden"}`, http.StatusForbidden)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), commentContextKey, comment)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (app *application) requirePostOwnership(next http.Handler) http.Handler {
