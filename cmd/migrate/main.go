@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samuelmolero26/go-backend-course/internal/env"
 )
 
 func main() {
-	dsn := os.Getenv("DB_DSN")
+	dsn := env.GetString("DB_DSN", "")
 
-	//for sanity check
 	if dsn == "" {
-		log.Fatal("DB_DSN enviroment variable is required")
+		log.Fatal("DB_DSN environment variable is required")
 	}
 
 	ctx := context.Background()
