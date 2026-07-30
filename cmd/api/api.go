@@ -50,12 +50,20 @@ func (app *application) mount() http.Handler {
 			r.Get("/users/{id}/following", app.getFollowingHandler)
 			r.Post("/users/{id}/follow", app.followUserHandler)
 			r.Delete("/users/{id}/follow", app.unfollowUserHandler)
+			r.Post("/posts/{id}/comments", app.createCommentHandler)
+			r.Get("/posts/{id}/comments", app.getCommentsHandler)
 
 			//ownership group
 			r.Group(func(r chi.Router) {
 				r.Use(app.requirePostOwnership)
 				r.Delete("/posts/{id}", app.deletePostHandler)
 				r.Patch("/posts/{id}", app.updatePostHandler)
+			})
+
+			//comments
+			r.Group(func(r chi.Router) {
+				r.Use(app.requireCommentOwnership)
+				r.Delete("/comments/{id}", app.deleteCommentHandler)
 			})
 		})
 	})
