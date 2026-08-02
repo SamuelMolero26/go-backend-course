@@ -7,5 +7,15 @@ bin/
 tmp/
 build-errors.log
 
+# Compiled binaries (keep out of version control)
+/api
+/migrate
+
 # Environment
 .env
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
