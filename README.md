@@ -189,3 +189,18 @@ No importa a qué instancia caiga. No sticky sessions. No Redis obligatorio.
 | 404 | Recurso no existe en DB | El ID no se encontró |
 | 429 | Rate limit excedido | Muy rápido, esperá |
 | 500 | Error inesperado del server | Algo explotó del lado nuestro |
+
+
+### Session: Object Storage (MinIO) + File Uploads
+
+### Object Storage 
+- Un objeto = data + metadata + key (bucket/objeto.jpg). El nombre ES la dirección.
+- Nada es público por defecto: los buckets arrancan privados. Abrís solo lo que querés (principio de menor privilegio).
+- La API no sirve los bytes: guarda la URL en la DB, el browser habla directo con el storage.
+
+### Upload Multipart
+- Un archivo no viaja como JSON → multipart/form-data + r.FormFile("image").
+- http.MaxBytesReader limita el body (anti-DoS). Sin límite, cualquiera te tumba el server.
+- Nunca confíes en el header Content-Type → sniffear los primeros 512 bytes con http.DetectContentType.
+- Los Read avanzan la posición del archivo → después de sniffear, file.Seek(0, io.SeekStart) antes del PutObject, o subís un archivo corrupto
+ 

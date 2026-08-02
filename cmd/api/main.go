@@ -14,6 +14,7 @@ func main() {
 	cfg := config{
 		addr: env.GetString("ADDR", ":8080"),
 		db:   env.GetString("DB_DSN", ""),
+		minioBucket: env.GetString("MINIO_BUCKET", "photos"),
 	}
 
 	ctx := context.Background()
@@ -24,10 +25,24 @@ func main() {
 	}
 	defer store.Close()
 
+	minioClient, err :=newMinioClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	if err := ensureBucket(ctx, minioClient, cfg.minioBucket); err != nil{
+		log.Fatal(err)
+	}
+
+	if err := setPublicReadPolicy(ctx, minioClient, cfg.minioBucket); err != nil {
+		log.Fatal(err)
+	}
+
 	app := &application{
 		config: cfg,
 		store:  store,
 		rateLimiter: ratelimit.New(10,2),
+		minioClient: minioClient,
 	}
 
 	mux := app.mount()

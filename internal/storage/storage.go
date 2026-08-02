@@ -34,6 +34,7 @@ type Post struct {
 	ID        int64     `json:"id"`
 	UserID    int64     `json:"user_id"`
 	Content   string    `json:"content"`
+	ImageURL  *string   `json:"image_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	User      *User     `json:"user,omitempty"`
 }
@@ -69,6 +70,7 @@ type PostRepository interface {
 	Create(ctx context.Context, post *Post) error
 	GetByID(ctx context.Context, id int64) (*Post, error)
 	GetByUserID(ctx context.Context, userID int64) ([]Post, error)
+	GetFeed(ctx context.Context) ([]Post, error)
 	Update(ctx context.Context, post *Post) error
 	Delete(ctx context.Context, id int64, userID int64) error
 }

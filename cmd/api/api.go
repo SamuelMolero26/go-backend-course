@@ -9,17 +9,20 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/samuelmolero26/go-backend-course/internal/storage"
 	"github.com/samuelmolero26/go-backend-course/internal/ratelimit"
+	"github.com/minio/minio-go/v7"
 )
 
 type application struct {
 	config 		config
 	store  		*storage.Store
 	rateLimiter *ratelimit.Limiter
+	minioClient	*minio.Client
 }
 
 type config struct {
 	addr string
 	db   string
+	minioBucket string
 }
 
 func (app *application) mount() http.Handler {
@@ -46,6 +49,7 @@ func (app *application) mount() http.Handler {
 			r.Get("/posts/{id}", app.getPostHandler)
 			r.Get("/users/{id}", app.getUserHandler)
 			r.Get("/users/{id}/posts", app.getUserPostsHandler)
+			r.Get("/posts", app.getFeedHandler)
 			r.Get("/users/{id}/followers", app.getFollowersHandler)
 			r.Get("/users/{id}/following", app.getFollowingHandler)
 			r.Post("/users/{id}/follow", app.followUserHandler)

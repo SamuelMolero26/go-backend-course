@@ -12,13 +12,14 @@ type PostStore struct {
 }
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
-	query := `INSERT INTO posts (user_id, content)
-		VALUES ($1, $2)
+	query := `INSERT INTO posts (user_id, content, image_url)
+		VALUES ($1, $2, $3)
 		RETURNING id, created_at`
 
 	err := s.db.QueryRow(ctx, query,
 		post.UserID,
 		post.Content,
+		post.ImageURL,
 	).Scan(&post.ID, &post.CreatedAt)
 
 	if err != nil {
@@ -28,12 +29,12 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 }
 
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
-	query := `SELECT id, user_id, content, created_at
+	query := `SELECT id, user_id, content, image_url, created_at
 		FROM posts WHERE id = $1`
 
 	var post Post
 	err := s.db.QueryRow(ctx, query, id).Scan(
-		&post.ID, &post.UserID, &post.Content, &post.CreatedAt,
+		&post.ID, &post.UserID, &post.Content, &post.ImageURL, &post.CreatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -45,7 +46,7 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 }
 
 func (s *PostStore) GetByUserID(ctx context.Context, userID int64) ([]Post, error) {
-	query := `SELECT id, user_id, content, created_at
+	query := `SELECT id, user_id, content, image_url, created_at
 		FROM posts
 		WHERE user_id = $1
 		ORDER BY created_at DESC`
@@ -59,11 +60,44 @@ func (s *PostStore) GetByUserID(ctx context.Context, userID int64) ([]Post, erro
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		err := rows.Scan(&post.ID, &post.UserID, &post.Content, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Content, &post.ImageURL, &post.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan post: %w", err)
 		}
 		posts = append(posts, post)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("rows iteration: %w", rows.Err())
+	}
+
+	return posts, nil
+}
+
+
+func (s *PostStore) GetFeed(ctx context.Context)([]Post, error) {
+	query := `SELECT id, user_id, content, image_url, created_at
+		FROM posts
+		ORDER BY created_at DESC
+		LIMIT 50`
+
+	rows, err := s.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("get feed: %w", err)
+	}
+
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Content, &post.ImageURL, &post.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("feed post: %w", err)
+		}
+
+		posts = append(posts, post)
+	
 	}
 
 	if rows.Err() != nil {
